@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System with Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="log-box" id="auth-container">
+        <div id="loginForm" class="form-container">
+            <h2>Log In</h2>
+            <div class="textbox">
+                <input type="text" id="loginUsername" required placeholder="Username">
+                <span class="Icon"><i class="fas fa-user"></i></span>
+            </div>
+            <div class="textbox">
+                <input type="password" id="loginPassword" required placeholder="Password">
+                <span class="Icon"><i class="fas fa-lock"></i></span>
+            </div>
+            <div class="remember-forgot">
+                <label><input type="checkbox" name="remember"> Remember Me</label>
+                <a href="#">Forgot Password?</a>
+            </div>
+            <button class="btn" onclick="login()">Log In</button>
+            <div class="sign-up-link">
+                <p>Don't have an account? <a href="#" onclick="showForm('signup')">Sign Up</a></p>
+            </div>
+        </div>
+
+        <div id="signupForm" class="form-container" style="display:none">
+            <h2>Register</h2>
+            <div class="textbox">
+                <input type="text" id="signupUsername" required placeholder="Username">
+                <span class="Icon"><i class="fas fa-user"></i></span>
+            </div>
+            <div class="textbox">
+                <input type="email" id="signupEmail" required placeholder="Email">
+                <span class="Icon"><i class="fas fa-envelope"></i></span>
+            </div>
+            <div class="textbox">
+                <input type="password" id="signupPassword" required placeholder="Password">
+                <span class="Icon"><i class="fas fa-lock"></i></span>
+            </div>
+            <div class="textbox">
+                <input type="password" id="confirmPassword" required placeholder="Confirm Password">
+                <span class="Icon"><i class="fas fa-lock"></i></span>
+            </div>
+            <button class="btn" onclick="signup()">Register</button>
+            <div class="sign-up-link">
+                <p>Already have an account? <a href="#" onclick="showForm('login')">Log In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminDashboard" class="dashboard" style="display:none">
+        <h2>Admin Dashboard</h2>
+        <div class="user-welcome">Welcome, Administrator!</div>
+        
+        <h3 class="section-title">User Management</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Password</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTable">
+            </tbody>
+        </table>
+        
+        <h3 class="section-title">Activity Logs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Username</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="logsTable">
+            </tbody>
+        </table>
+        <button class="clear-logs-btn" onclick="clearLogs()">Clear Logs</button>
+        <button class="logout-btn btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div id="userDashboard" class="dashboard" style="display:none">
+        <h2>User Dashboard</h2>
+        <div class="user-welcome" id="userWelcome">Welcome, User!</div>
+        <p>You are logged in as a standard user. This is your personal dashboard.</p>
+        <button class="logout-btn btn" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Initialize storage on first run
+        if (!localStorage.getItem('users')) {
+            const users = [
+                { username: 'admin', email: 'admin@example.com', password: 'admin', role: 'admin' },
+                { username: 'user1', email: 'user1@example.com', password: 'pass1', role: 'user' }
+            ];
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        if (!localStorage.getItem('logs')) {
+            localStorage.setItem('logs', JSON.stringify([]));
+        }
+
+        // Show form function
+        function showForm(formType) {
+            // Show correct form
+            document.getElementById('loginForm').style.display = formType === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = formType === 'signup' ? 'block' : 'none';
+        }
+
+        // Add log entry
+        function addLog(eventType, username) {
+            const logs = JSON.parse(localStorage.getItem('logs'));
+            logs.push({
+                event: eventType,
+                username: username,
+                time: new Date().toLocaleString()
+            });
+            localStorage.setItem('logs', JSON.stringify(logs));
+        }
+
+        // Login function
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const users = JSON.parse(localStorage.getItem('users'));
+
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                addLog('login', username);
+
+                // Hide login container
+                document.getElementById('auth-container').style.display = 'none';
+
+                // Show appropriate dashboard
+                if (user.role === 'admin') {
+                    document.getElementById('adminDashboard').style.display = 'block';
+                    updateUserTable(); // Populate the user table
+                    updateLogsTable();
+                } else {
+                    document.getElementById('userDashboard').style.display = 'block';
+                    document.getElementById('userWelcome').textContent = `Welcome, ${user.username}!`;
+                }
+            } else {
+                alert('Invalid username or password!');
+            }
+        }
+
+        // Signup function
+        function signup() {
+            const username = document.getElementById('signupUsername').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const users = JSON.parse(localStorage.getItem('users'));
+
+            if (!username || !email || !password) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (username === 'admin') {
+                alert('This username is reserved');
+                return;
+            }
+
+            if (users.some(u => u.username === username)) {
+                alert('Username already exists');
+                return;
+            }
+
+            if (users.some(u => u.email === email)) {
+                alert('Email already exists');
+                return;
+            }
+
+            users.push({ username, email, password, role: 'user' });
+            localStorage.setItem('users', JSON.stringify(users));
+            addLog('signup', username);
+            alert('Account created successfully! Please login.');
+            showForm('login');
+        }
+
+        // Update user table in admin dashboard
+        function updateUserTable() {
+            const users = JSON.parse(localStorage.getItem('users'));
+            const userTable = document.getElementById('userTable');
+            userTable.innerHTML = ''; // Clear existing rows
+
+            users.forEach((user) => {
+                const row = userTable.insertRow();
+                const usernameCell = row.insertCell();
+                const emailCell = row.insertCell();
+                const passwordCell = row.insertCell();
+                const roleCell = row.insertCell();
+                const actionsCell = row.insertCell();
+
+                usernameCell.textContent = user.username;
+                emailCell.textContent = user.email || 'N/A';
+                passwordCell.textContent = user.password; // Display password
+                roleCell.textContent = user.role;
+
+                if (user.role !== 'admin') {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.onclick = () => deleteUser(user.username); // Pass username for deletion
+                    actionsCell.appendChild(deleteButton);
+                } else {
+                    actionsCell.textContent = 'N/A';
+                }
+            });
+        }
+
+        // Delete user function
+        function deleteUser(usernameToDelete) {
+            if (confirm(`Are you sure you want to delete user "${usernameToDelete}"?`)) {
+                const users = JSON.parse(localStorage.getItem('users'));
+                const updatedUsers = users.filter(user => user.username !== usernameToDelete);
+                localStorage.setItem('users', JSON.stringify(updatedUsers));
+                addLog('delete_user', usernameToDelete);
+                updateUserTable(); // Refresh the user table
+            }
+        }
+
+        // Update admin logs table
+        function updateLogsTable() {
+            const logs = JSON.parse(localStorage.getItem('logs'));
+            const table = document.getElementById('logsTable');
+            table.innerHTML = '';
+            
+            // Sort logs with newest first
+            logs.sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            logs.forEach(log => {
+                const row = table.insertRow();
+                const eventCell = row.insertCell();
+                const usernameCell = row.insertCell();
+                const timeCell = row.insertCell();
+                
+                eventCell.textContent = log.event;
+                usernameCell.textContent = log.username;
+                timeCell.textContent = log.time;
+            });
+        }
+
+        // Clear logs function
+        function clearLogs() {
+            if (confirm('Are you sure you want to clear all activity logs?')) {
+                localStorage.setItem('logs', JSON.stringify([]));
+                updateLogsTable(); // Refresh the logs table
+                addLog('clear_logs', 'admin'); // Log the action
+            }
+        }
+
+        // Logout function
+        function logout() {
+            // Hide all dashboards
+            document.getElementById('adminDashboard').style.display = 'none';
+            document.getElementById('userDashboard').style.display = 'none';
+
+            // Show login form
+            document.getElementById('auth-container').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+
+            // Clear fields
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('signupUsername').value = '';
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+    </script>
+</body>
+</html>
