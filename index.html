@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login System with Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" crossorigin="anonymous" />
-    <link rel="stylesheet" href="styles.css"> </head>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
     <div class="log-box" id="auth-container">
-        <div class="tabs">
-            <button class="tab active" onclick="showForm('login')">Login</button>
-            <button class="tab" onclick="showForm('signup')">Sign Up</button>
-        </div>
-
         <div id="loginForm" class="form-container">
             <h2>Log In</h2>
             <div class="textbox">
@@ -114,23 +110,11 @@
             localStorage.setItem('logs', JSON.stringify([]));
         }
 
-        // Tab switching
+        // Show form function
         function showForm(formType) {
-            // Update tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            if (event && event.target) {
-                event.target.classList.add('active');
-            } else {
-                document.querySelector(`.tab:${formType === 'login' ? 'first-child' : 'last-child'}`).classList.add('active');
-            }
-
             // Show correct form
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('signupForm').style.display = 'none';
-            document.getElementById(formType + 'Form').style.display = 'block';
+            document.getElementById('loginForm').style.display = formType === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = formType === 'signup' ? 'block' : 'none';
         }
 
         // Add log entry
@@ -294,8 +278,6 @@
             document.getElementById('auth-container').style.display = 'block';
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('signupForm').style.display = 'none';
-            document.querySelector('.tab:first-child').classList.add('active');
-            document.querySelector('.tab:last-child').classList.remove('active');
 
             // Clear fields
             document.getElementById('loginUsername').value = '';
